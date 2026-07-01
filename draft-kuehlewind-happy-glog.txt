@@ -1,0 +1,470 @@
+
+
+
+
+happy                                                       M. Kühlewind
+Internet-Draft                                                  Ericsson
+Intended status: Informational                               1 July 2026
+Expires: 2 January 2027
+
+
+            Happy Eyeballs v3 (HEv3) Event Logging with qlog
+                   draft-kuehlewind-happy-glog-latest
+
+Abstract
+
+   This document specifies a qlog extension for Happy Eyeballs v3
+   (HEv3), enabling logging of dual-stack connection racing behavior.
+   It defines a dedicated event category, event names, and JSON data
+   structures that capture DNS timing, candidate discovery, attempt
+   scheduling, fallback timers, racing windows, success/failure
+   outcomes, and summary metrics.
+
+About This Document
+
+   This note is to be removed before publishing as an RFC.
+
+   The latest revision of this draft can be found at
+   https://example.com/LATEST.  Status information for this document may
+   be found at https://datatracker.ietf.org/doc/draft-kuehlewind-happy-
+   glog/.
+
+   Discussion of this document takes place on the WG Working Group
+   mailing list (mailto:WG@example.com), which is archived at
+   https://example.com/WG.
+
+   Source for this draft and an issue tracker can be found at
+   https://github.com/USER/REPO.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 2 January 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction
+   2.  Conventions and Definitions
+   3.  Event Schema Definition
+     3.1.  Draft Event Schema Identification
+   4.  HE Data Types
+     4.1.  Attempt Target
+     4.2.  Policy
+     4.3.  DNS Result
+   5.  Event Definitions
+     5.1.  Event: config_set
+     5.2.  Event: config_updated
+     5.3.  Event: dns_query_started
+     5.4.  Event: dns_query_finished
+     5.5.  Event: candidate_discovered
+     5.6.  Event: attempt_scheduled
+     5.7.  Event: attempt_started
+     5.8.  Event: attempt_outcome
+     5.9.  Event: racing_window_opened
+     5.10. Event: racing_window_closed
+     5.11. Event: fallback_timer_set
+     5.12. Event: fallback_timer_fired
+     5.13. Event: fallback_timer_canceled
+     5.14. Event: connection_selected
+     5.15. Event: connection_aborted
+     5.16. Event: metrics
+     5.17. Conformance Requirements
+   6.  Correlation with transport protocols
+   7.  Security Considerations
+   8.  IANA Considerations
+   9.  Normative References
+   Acknowledgments
+   Author's Address
+
+1.  Introduction
+
+   Happy Eyeballs helps application to reduce connection latency on
+   dual-stack networks.  Happy Eyeballs v3 (HEv3) extents racing From
+   IPv4/IPv6 only to e.g. include TCP+TLS, QUIC/HTTP/3.  Further HEv3 is
+   expected to provide more detailed logging such that connection
+   failures can be discovered and eventually fixed.  This document
+   defines a qlog extension that provides logging and visibility into
+   HEv3 decision-making and timing.
+
+   The extension covers:
+
+   *  Logging of DNS queries and resolution timing.
+
+   *  Candidate address discovery and ranking.
+
+   *  Scheduling, cancellation, or execution of connection attempts.
+
+   *  Fallback timer management and racing windows.
+
+   *  Success, failure, and timeout results.
+
+   *  End-to-end metrics summarizing the HE session.
+
+2.  Conventions and Definitions
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+3.  Event Schema Definition
+
+   This document proposes a qlog schema for HEv3 using the newly defined
+   event schema urn:ietf:params:qlog:events:hev3.
+
+3.1.  Draft Event Schema Identification
+
+   This section is to be removed before publishing as an RFC.
+
+   Only implementations of the final, published RFC can use the events
+   belonging to the event schema with the URI
+   urn:ietf:params:qlog:events:hev3.  Until such an RFC exists,
+   implementations MUST NOT identify themselves using this URI.
+
+   Implementations of draft versions of the event schema MUST append the
+   string "-" and the corresponding draft number to the URI.  For
+   example, draft 01 of this document is identified using the URI
+   urn:ietf:params:qlog:events:hev3-01.
+
+   The namespace identifier itself is not affected by this requirement.
+
+4.  HE Data Types
+
+4.1.  Attempt Target
+
+   HEAttemptTarget = {
+           address: string
+           port: uint16
+           family: "ipv4" | "ipv6"
+           interface: string ?
+           path_id: string ?
+
+           * $he-attempttarget-extension
+   }
+
+4.2.  Policy
+
+   HEPolicy = {
+           base_delay_ms: uint32
+           jitter_ms: uint32
+           max_parallel_attempts: uint32
+           prefer_ipv6: bool
+           prefer_last_success_family: bool
+           ipv6_precedence_offset: int32
+           initial_family: "ipv4" | "ipv6" | "auto"
+           success_definition:
+                   "tcp_connected" |
+                   "tls_handshake_complete" |
+                   "quic_1rtt_ready"  ?
+
+           * $he-policy-extension
+   }
+
+   If omitted, success_definition defaults to:
+
+   *  tcp_connected for TCP/TLS stacks 
+
+   *  quic_1rtt_ready for QUIC stacks
+
+4.3.  DNS Result
+
+   HEDNSResult = {
+           address: string
+           family: "ipv4" | "ipv6"
+           ttl_s: uint32 ?
+           priority: uint32 ?
+   }
+
+5.  Event Definitions
+
+   Each event uses:  name: "hev3:<event>" with the <event> type
+   identifier defined below in the section headings.
+
+5.1.  Event: config_set
+
+   HEConfigSet = {
+           he_session_id: string
+           policy: HEPolicy,
+           reason:
+                   "startup" |
+                   "network_change" |
+                   "app_config" |
+                   "persisted_state"
+
+           * $$he-configset-extension
+   }
+
+5.2.  Event: config_updated
+
+   HEConfigUpdated = {
+           he_session_id: string
+           changed: HEPolicy
+           reason:
+                   "network_change" |
+                   "admin" |
+                   "app_hint" |
+                   "learned_preference"
+
+           * $$he-configupdated-extension
+   }
+
+5.3.  Event: dns_query_started
+
+   HEDNSQueryStarted = {
+           he_session_id: string
+           dns_id: string
+           hostname: string
+           qtypes: [ "A" | "AAAA"]+
+           bootstrap_hint: string ?
+
+           * $$he-dnsquerystarted-extension
+   }
+
+5.4.  Event: dns_query_finished
+
+   HEDNSQueryFinished = {
+           he_session_id: string
+           dns_id: string
+           hostname: string
+           results: [HEDNSResult]
+           error_code: string ?
+           error_message: string ?
+           duration_ms: uint32
+
+           * $$he-dnsqueryfinished-extension
+   }
+
+5.5.  Event: candidate_discovered
+
+   HECandidateDiscovered = {
+           he_session_id: string
+           source: "dns" | "cache" | "alt_svc" | "synth" | "preconnect"
+           target: HEAttemptTarget
+           rank: uint32
+
+           * $$he-candidatediscovered-extension
+   }
+
+5.6.  Event: attempt_scheduled
+
+   HEAttemptScheduled = {
+           he_session_id: string
+           attempt_id: string
+           target: HEAttemptTarget
+           scheduled_after_ms: uint32
+           priority: uint32
+           reason:
+                   "policy_timer" |
+                   "dns_completed" |
+                   "racing_window" |
+                   "retry"
+
+           * $$he-attemptscheduled-extension
+   }
+
+5.7.  Event: attempt_started
+
+   HEAttemptStarted = {
+           he_session_id: string
+           attempt_id: string
+           target: HEAttemptTarget
+           transport: "tcp" | "quic"
+           ref_event_id: string ?
+
+           * $$he-attemptstarted-extension
+   }
+
+   QUIC implementations should set ref_event_id to the relevant
+   connectivity:connection_started.
+
+5.8.  Event: attempt_outcome
+
+   HEAttemptOutcome = {
+           he_session_id: string
+           attempt_id: string
+           result: "success" | "failure" | "timeout" | "canceled"
+           error_code: string ?
+           connect_duration_ms: uint32 ?
+
+           * $$he-attemptoutcome-extension
+   }
+
+5.9.  Event: racing_window_opened
+
+   HERacingWindowOpened = {
+           he_session_id: string
+           window_id: string
+           max_parallel_attempts: uint32
+
+           * $$he-racingwindowopened-extension
+   }
+
+5.10.  Event: racing_window_closed
+
+   HERacingWindowClosed = {
+           he_session_id: string
+           window_id: string
+
+           * $$he-racingwindowclosed-extension
+   }
+
+5.11.  Event: fallback_timer_set
+
+   HEFallbackTimerSet = {
+           he_session_id: string
+           timer_id: string
+           delay_ms: uint32
+           for_family: "ipv4" | "ipv6"
+
+           * $$he-fallbacktimerset-extension
+   }
+
+5.12.  Event: fallback_timer_fired
+
+   HEFallbackTimerFired = {
+           he_session_id: string
+           timer_id: string
+
+           * $$he-fallbacktimerfired-extension
+   }
+
+5.13.  Event: fallback_timer_canceled
+
+   HEFallbackTimerCanceled = {
+           he_session_id: string,
+           timer_id: string,
+           reason: "success” | “abort"
+
+           * $$he-fallbacktimercanceled-extension
+   }
+
+5.14.  Event: connection_selected
+
+   HEConnectionSelected = {
+           he_session_id: string
+           attempt_id: string
+           ref_event_id: string ?
+
+           * $$he-connectionselected-extension
+   }
+
+5.15.  Event: connection_aborted
+
+   HEConnectionAborted = {
+           he_session_id: string
+           reason: string
+
+           * $$he-connectionaborted-extension
+   }
+
+5.16.  Event: metrics
+
+   HEMetrics = {
+           he_session_id: string
+           tt_first_success_ms: uint32 ?
+           first_success_family: "ipv4" | "ipv6" ?
+           attempts_total: uint32
+           attempts_success: uint32
+           attempts_failure: uint32
+
+           * $$he-metrics-extension
+   }
+
+5.17.  Conformance Requirements
+
+   *  Every attempt_started MUST have exactly one attempt_outcome.
+
+   *  connection_selected MUST reference an attempt whose result is
+      "success".
+
+   *  Exactly one metrics event SHOULD appear per HE session.
+
+6.  Correlation with transport protocols
+
+   TCP/TLS implementation can correlate HE events with:
+
+   *  tls:handshake_started 
+
+   *  tls:handshake_complete 
+
+   *  TCP state transitions (if available in logs)
+
+   TBD
+
+7.  Security Considerations
+
+   TBD
+
+8.  IANA Considerations
+
+   This document registers a new entry in the "qlog event schema URIs"
+   registry (created in {Section 15 of QLOG-MAIN}):
+
+   Event schema URI:  urn:ietf:params:qlog:events:hev3
+
+   Namespace:  nev3
+
+   Event Types:  config_set, config_updated, dns_query_started,
+      dns_query_finished, candidate_discovered, attempt_scheduled,
+      attempt_started, attempt_outcome, racing_window_opened,
+      racing_window_closed, fallback_timer_set, fallback_timer_fired,
+      fallback_timer_canceled, connection_selected, connection_aborted,
+      metrics
+
+   Description:  Event definitions for logging HEv3 events
+
+   Reference:  This document
+
+9.  Normative References
+
+   [QLOG-MAIN]
+              Marx, R., Niccolini, L., Seemann, M., and L. Pardue,
+              "qlog: Structured Logging for Network Protocols", Work in
+              Progress, Internet-Draft, draft-ietf-quic-qlog-main-
+              schema-13, 20 October 2025,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-quic-
+              qlog-main-schema-13>.
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119,
+              DOI 10.17487/RFC2119, March 1997,
+              <https://www.rfc-editor.org/rfc/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, DOI 10.17487/RFC8174,
+              May 2017, <https://www.rfc-editor.org/rfc/rfc8174>.
+
+Acknowledgments
+
+Author's Address
+
+   Mirja Kühlewind
+   Ericsson
+   Email: mirja.kuehlewind@ercisson.com

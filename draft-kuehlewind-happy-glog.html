@@ -4,16 +4,19 @@
 <meta charset="utf-8">
 <meta content="Common,Latin" name="scripts">
 <meta content="initial-scale=1.0" name="viewport">
-<title>TODO - Your title</title>
-<meta content="Your Name Here" name="author">
+<title>Happy Eyeballs v3 (HEv3) Event Logging with qlog</title>
+<meta content="Mirja Kühlewind" name="author">
 <meta content="
-       TODO Abstract 
+       This document specifies a qlog extension for Happy Eyeballs v3 (HEv3), enabling
+logging of dual-stack connection racing behavior. It defines a dedicated
+event category, event names, and JSON data structures that capture DNS timing,
+candidate discovery, attempt scheduling, fallback timers, racing windows,
+success/failure outcomes, and summary metrics. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
-<meta content="next generation" name="keyword">
-<meta content="unicorn" name="keyword">
-<meta content="sparkling distributed ledger" name="keyword">
-<meta content="draft-todo-yourname-protocol-latest" name="ietf.draft">
+<meta content="qlog" name="keyword">
+<meta content="HEv3" name="keyword">
+<meta content="draft-kuehlewind-happy-glog-latest" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.0
     Python 3.14.5
@@ -29,7 +32,7 @@
     requests 2.33.1
     wcwidth 0.8.1
 -->
-<link href="draft-todo-yourname-protocol.xml" rel="alternate" type="application/rfc+xml">
+<link href="draft-kuehlewind-happy-glog.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
 <style type="text/css">@font-face {
   font-family: 'Lora';
@@ -1045,11 +1048,11 @@ svg {
 <table class="ears">
 <thead><tr>
 <td class="left">Internet-Draft</td>
-<td class="center">TODO - Abbreviation</td>
+<td class="center">HEv3 qlog</td>
 <td class="right">July 2026</td>
 </tr></thead>
 <tfoot><tr>
-<td class="left">Here</td>
+<td class="left">Kühlewind</td>
 <td class="center">Expires 2 January 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
@@ -1058,9 +1061,9 @@ svg {
 <div id="internal-metadata" class="document-information">
 <dl id="identifiers">
 <dt class="label-workgroup">Workgroup:</dt>
-<dd class="workgroup">WG Working Group</dd>
+<dd class="workgroup">happy</dd>
 <dt class="label-internet-draft">Internet-Draft:</dt>
-<dd class="internet-draft">draft-todo-yourname-protocol-latest</dd>
+<dd class="internet-draft">draft-kuehlewind-happy-glog-latest</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
 <time datetime="2026-07-01" class="published">1 July 2026</time>
@@ -1072,16 +1075,20 @@ svg {
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
-      <div class="author-name">Y. N. Here</div>
-<div class="org">Your Organization Here</div>
+      <div class="author-name">M. Kühlewind</div>
+<div class="org">Ericsson</div>
 </div>
 </dd>
 </dl>
 </div>
-<h1 id="title">TODO - Your title</h1>
+<h1 id="title">Happy Eyeballs v3 (HEv3) Event Logging with qlog</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">TODO Abstract<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document specifies a qlog extension for Happy Eyeballs v3 (HEv3), enabling
+logging of dual-stack connection racing behavior. It defines a dedicated
+event category, event names, and JSON data structures that capture DNS timing,
+candidate discovery, attempt scheduling, fallback timers, racing windows,
+success/failure outcomes, and summary metrics.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note rfcEditorRemove" id="section-note.1">
       <h2 id="name-about-this-document">
@@ -1090,7 +1097,7 @@ svg {
 <p id="section-note.1-1">This note is to be removed before publishing as an RFC.<a href="#section-note.1-1" class="pilcrow">¶</a></p>
 <p id="section-note.1-2">
         The latest revision of this draft can be found at <span><a href="https://example.com/LATEST">https://example.com/LATEST</a></span>.
-        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-todo-yourname-protocol/">https://datatracker.ietf.org/doc/draft-todo-yourname-protocol/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
+        Status information for this document may be found at <span><a href="https://datatracker.ietf.org/doc/draft-kuehlewind-happy-glog/">https://datatracker.ietf.org/doc/draft-kuehlewind-happy-glog/</a></span>.<a href="#section-note.1-2" class="pilcrow">¶</a></p>
 <p id="section-note.1-3">
         Discussion of this document takes place on the
         WG Working Group mailing list (<span><a href="mailto:WG@example.com">mailto:WG@example.com</a></span>),
@@ -1153,19 +1160,100 @@ svg {
             <p id="section-toc.1-1.2.1" class="keepWithNext"><a href="#section-2" class="auto internal xref">2</a>.  <a href="#name-conventions-and-definitions" class="internal xref">Conventions and Definitions</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3">
-            <p id="section-toc.1-1.3.1" class="keepWithNext"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+            <p id="section-toc.1-1.3.1"><a href="#section-3" class="auto internal xref">3</a>.  <a href="#name-event-schema-definition" class="internal xref">Event Schema Definition</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1">
+                <p id="section-toc.1-1.3.2.1.1" class="keepWithNext"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-draft-event-schema-identifi" class="internal xref">Draft Event Schema Identification</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4">
-            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+            <p id="section-toc.1-1.4.1"><a href="#section-4" class="auto internal xref">4</a>.  <a href="#name-he-data-types" class="internal xref">HE Data Types</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.1">
+                <p id="section-toc.1-1.4.2.1.1"><a href="#section-4.1" class="auto internal xref">4.1</a>.  <a href="#name-attempt-target" class="internal xref">Attempt Target</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.2">
+                <p id="section-toc.1-1.4.2.2.1"><a href="#section-4.2" class="auto internal xref">4.2</a>.  <a href="#name-policy" class="internal xref">Policy</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.4.2.3">
+                <p id="section-toc.1-1.4.2.3.1"><a href="#section-4.3" class="auto internal xref">4.3</a>.  <a href="#name-dns-result" class="internal xref">DNS Result</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5">
-            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+            <p id="section-toc.1-1.5.1"><a href="#section-5" class="auto internal xref">5</a>.  <a href="#name-event-definitions" class="internal xref">Event Definitions</a></p>
+<ul class="compact toc ulBare ulEmpty">
+<li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.1">
+                <p id="section-toc.1-1.5.2.1.1"><a href="#section-5.1" class="auto internal xref">5.1</a>.  <a href="#name-event-config_set" class="internal xref">Event: config_set</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.2">
+                <p id="section-toc.1-1.5.2.2.1"><a href="#section-5.2" class="auto internal xref">5.2</a>.  <a href="#name-event-config_updated" class="internal xref">Event: config_updated</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.3">
+                <p id="section-toc.1-1.5.2.3.1"><a href="#section-5.3" class="auto internal xref">5.3</a>.  <a href="#name-event-dns_query_started" class="internal xref">Event: dns_query_started</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.4">
+                <p id="section-toc.1-1.5.2.4.1"><a href="#section-5.4" class="auto internal xref">5.4</a>.  <a href="#name-event-dns_query_finished" class="internal xref">Event: dns_query_finished</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.5">
+                <p id="section-toc.1-1.5.2.5.1"><a href="#section-5.5" class="auto internal xref">5.5</a>.  <a href="#name-event-candidate_discovered" class="internal xref">Event: candidate_discovered</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.6">
+                <p id="section-toc.1-1.5.2.6.1"><a href="#section-5.6" class="auto internal xref">5.6</a>.  <a href="#name-event-attempt_scheduled" class="internal xref">Event: attempt_scheduled</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.7">
+                <p id="section-toc.1-1.5.2.7.1"><a href="#section-5.7" class="auto internal xref">5.7</a>.  <a href="#name-event-attempt_started" class="internal xref">Event: attempt_started</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.8">
+                <p id="section-toc.1-1.5.2.8.1"><a href="#section-5.8" class="auto internal xref">5.8</a>.  <a href="#name-event-attempt_outcome" class="internal xref">Event: attempt_outcome</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.9">
+                <p id="section-toc.1-1.5.2.9.1"><a href="#section-5.9" class="auto internal xref">5.9</a>.  <a href="#name-event-racing_window_opened" class="internal xref">Event: racing_window_opened</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.10">
+                <p id="section-toc.1-1.5.2.10.1"><a href="#section-5.10" class="auto internal xref">5.10</a>. <a href="#name-event-racing_window_closed" class="internal xref">Event: racing_window_closed</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.11">
+                <p id="section-toc.1-1.5.2.11.1"><a href="#section-5.11" class="auto internal xref">5.11</a>. <a href="#name-event-fallback_timer_set" class="internal xref">Event: fallback_timer_set</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.12">
+                <p id="section-toc.1-1.5.2.12.1"><a href="#section-5.12" class="auto internal xref">5.12</a>. <a href="#name-event-fallback_timer_fired" class="internal xref">Event: fallback_timer_fired</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.13">
+                <p id="section-toc.1-1.5.2.13.1"><a href="#section-5.13" class="auto internal xref">5.13</a>. <a href="#name-event-fallback_timer_cancel" class="internal xref">Event: fallback_timer_canceled</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.14">
+                <p id="section-toc.1-1.5.2.14.1"><a href="#section-5.14" class="auto internal xref">5.14</a>. <a href="#name-event-connection_selected" class="internal xref">Event: connection_selected</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.15">
+                <p id="section-toc.1-1.5.2.15.1"><a href="#section-5.15" class="auto internal xref">5.15</a>. <a href="#name-event-connection_aborted" class="internal xref">Event: connection_aborted</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.16">
+                <p id="section-toc.1-1.5.2.16.1"><a href="#section-5.16" class="auto internal xref">5.16</a>. <a href="#name-event-metrics" class="internal xref">Event: metrics</a></p>
+</li>
+              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.5.2.17">
+                <p id="section-toc.1-1.5.2.17.1"><a href="#section-5.17" class="auto internal xref">5.17</a>. <a href="#name-conformance-requirements" class="internal xref">Conformance Requirements</a></p>
+</li>
+            </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6">
-            <p id="section-toc.1-1.6.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+            <p id="section-toc.1-1.6.1"><a href="#section-6" class="auto internal xref">6</a>.  <a href="#name-correlation-with-transport-" class="internal xref">Correlation with transport protocols</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.7">
-            <p id="section-toc.1-1.7.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.7.1"><a href="#section-7" class="auto internal xref">7</a>.  <a href="#name-security-considerations" class="internal xref">Security Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8">
+            <p id="section-toc.1-1.8.1"><a href="#section-8" class="auto internal xref">8</a>.  <a href="#name-iana-considerations" class="internal xref">IANA Considerations</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
+            <p id="section-toc.1-1.9.1"><a href="#section-9" class="auto internal xref">9</a>.  <a href="#name-normative-references" class="internal xref">Normative References</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.10">
+            <p id="section-toc.1-1.10.1"><a href="#appendix-A" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.11">
+            <p id="section-toc.1-1.11.1"><a href="#appendix-B" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -1176,7 +1264,34 @@ svg {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">TODO Introduction<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">Happy Eyeballs helps application to reduce connection
+latency on dual-stack networks. Happy Eyeballs v3 (HEv3) extents racing
+From IPv4/IPv6 only to e.g. include TCP+TLS, QUIC/HTTP/3.
+Further HEv3 is expected to provide more detailed logging such that connection
+failures can be discovered and eventually fixed.
+This document defines a qlog extension that provides logging and visibility into HEv3
+decision-making and timing.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-2">The extension covers:<a href="#section-1-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-1-3.1">
+          <p id="section-1-3.1.1">Logging of DNS queries and resolution timing.<a href="#section-1-3.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.2">
+          <p id="section-1-3.2.1">Candidate address discovery and ranking.<a href="#section-1-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.3">
+          <p id="section-1-3.3.1">Scheduling, cancellation, or execution of connection attempts.<a href="#section-1-3.3.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.4">
+          <p id="section-1-3.4.1">Fallback timer management and racing windows.<a href="#section-1-3.4.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.5">
+          <p id="section-1-3.5.1">Success, failure, and timeout results.<a href="#section-1-3.5.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-1-3.6">
+          <p id="section-1-3.6.1">End-to-end metrics summarizing the HE session.<a href="#section-1-3.6.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
 </section>
 </div>
 <div id="conventions-and-definitions">
@@ -1190,28 +1305,521 @@ described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</s
 appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
-<div id="security-considerations">
+<div id="event-schema-definition">
 <section id="section-3">
-      <h2 id="name-security-considerations">
-<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      <h2 id="name-event-schema-definition">
+<a href="#section-3" class="section-number selfRef">3. </a><a href="#name-event-schema-definition" class="section-name selfRef">Event Schema Definition</a>
       </h2>
-<p id="section-3-1">TODO Security<a href="#section-3-1" class="pilcrow">¶</a></p>
+<p id="section-3-1">This document  proposes a qlog schema for HEv3 using the newly defined event schema <code>urn:ietf:params:qlog:events:hev3</code>.<a href="#section-3-1" class="pilcrow">¶</a></p>
+<div id="draft-event-schema-identification">
+<section id="section-3.1">
+        <h3 id="name-draft-event-schema-identifi">
+<a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-draft-event-schema-identifi" class="section-name selfRef">Draft Event Schema Identification</a>
+        </h3>
+<p id="section-3.1-1">This section is to be removed before publishing as an RFC.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+<p id="section-3.1-2">Only implementations of the final, published RFC can use the events belonging to the event schema with the URI <code>urn:ietf:params:qlog:events:hev3</code>. Until such an RFC exists, implementations <span class="bcp14">MUST NOT</span> identify themselves using this URI.<a href="#section-3.1-2" class="pilcrow">¶</a></p>
+<p id="section-3.1-3">Implementations of draft versions of the event schema <span class="bcp14">MUST</span> append the string "-" and the corresponding draft number to the URI. For example, draft 01 of this document is identified using the URI urn:ietf:params:qlog:events:hev3-01.<a href="#section-3.1-3" class="pilcrow">¶</a></p>
+<p id="section-3.1-4">The namespace identifier itself is not affected by this requirement.<a href="#section-3.1-4" class="pilcrow">¶</a></p>
+</section>
+</div>
+</section>
+</div>
+<div id="he-data-types">
+<section id="section-4">
+      <h2 id="name-he-data-types">
+<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-he-data-types" class="section-name selfRef">HE Data Types</a>
+      </h2>
+<div id="attempt-target">
+<section id="section-4.1">
+        <h3 id="name-attempt-target">
+<a href="#section-4.1" class="section-number selfRef">4.1. </a><a href="#name-attempt-target" class="section-name selfRef">Attempt Target</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-4.1-1">
+<pre>
+HEAttemptTarget = {
+        address: string
+        port: uint16
+        family: "ipv4" | "ipv6"
+        interface: string ?
+        path_id: string ?
+
+        * $he-attempttarget-extension
+}
+</pre><a href="#section-4.1-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="policy">
+<section id="section-4.2">
+        <h3 id="name-policy">
+<a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-policy" class="section-name selfRef">Policy</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-4.2-1">
+<pre>
+HEPolicy = {
+        base_delay_ms: uint32
+        jitter_ms: uint32
+        max_parallel_attempts: uint32
+        prefer_ipv6: bool
+        prefer_last_success_family: bool
+        ipv6_precedence_offset: int32
+        initial_family: "ipv4" | "ipv6" | "auto"
+        success_definition:
+                "tcp_connected" |
+                "tls_handshake_complete" |
+                "quic_1rtt_ready"  ?
+
+        * $he-policy-extension
+}
+</pre><a href="#section-4.2-1" class="pilcrow">¶</a>
+</div>
+<p id="section-4.2-2">If omitted, <code>success_definition</code> defaults to:<a href="#section-4.2-2" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-4.2-3.1">
+            <p id="section-4.2-3.1.1"><code>tcp_connected</code> for TCP/TLS stacks<a href="#section-4.2-3.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-4.2-3.2">
+            <p id="section-4.2-3.2.1"><code>quic_1rtt_ready</code> for QUIC stacks<a href="#section-4.2-3.2.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+<div id="dns-result">
+<section id="section-4.3">
+        <h3 id="name-dns-result">
+<a href="#section-4.3" class="section-number selfRef">4.3. </a><a href="#name-dns-result" class="section-name selfRef">DNS Result</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-4.3-1">
+<pre>
+HEDNSResult = {
+        address: string
+        family: "ipv4" | "ipv6"
+        ttl_s: uint32 ?
+        priority: uint32 ?
+}
+</pre><a href="#section-4.3-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+</section>
+</div>
+<div id="event-definitions">
+<section id="section-5">
+      <h2 id="name-event-definitions">
+<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-event-definitions" class="section-name selfRef">Event Definitions</a>
+      </h2>
+<p id="section-5-1">Each event uses: 
+        <code>name: "hev3:&lt;event&gt;"</code>
+with the <code>&lt;event&gt;</code> type identifier defined below in the section headings.<a href="#section-5-1" class="pilcrow">¶</a></p>
+<div id="event-configset">
+<section id="section-5.1">
+        <h3 id="name-event-config_set">
+<a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-event-config_set" class="section-name selfRef">Event: config_set</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.1-1">
+<pre>
+HEConfigSet = {
+        he_session_id: string
+        policy: HEPolicy,
+        reason:
+                "startup" |
+                "network_change" |
+                "app_config" |
+                "persisted_state"
+
+        * $$he-configset-extension
+}
+</pre><a href="#section-5.1-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-configupdated">
+<section id="section-5.2">
+        <h3 id="name-event-config_updated">
+<a href="#section-5.2" class="section-number selfRef">5.2. </a><a href="#name-event-config_updated" class="section-name selfRef">Event: config_updated</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.2-1">
+<pre>
+HEConfigUpdated = {
+        he_session_id: string
+        changed: HEPolicy
+        reason:
+                "network_change" |
+                "admin" |
+                "app_hint" |
+                "learned_preference"
+
+        * $$he-configupdated-extension
+}
+</pre><a href="#section-5.2-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-dnsquerystarted">
+<section id="section-5.3">
+        <h3 id="name-event-dns_query_started">
+<a href="#section-5.3" class="section-number selfRef">5.3. </a><a href="#name-event-dns_query_started" class="section-name selfRef">Event: dns_query_started</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.3-1">
+<pre>
+HEDNSQueryStarted = {
+        he_session_id: string
+        dns_id: string
+        hostname: string
+        qtypes: [ "A" | "AAAA"]+
+        bootstrap_hint: string ?
+
+        * $$he-dnsquerystarted-extension
+}
+</pre><a href="#section-5.3-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-dnsqueryfinished">
+<section id="section-5.4">
+        <h3 id="name-event-dns_query_finished">
+<a href="#section-5.4" class="section-number selfRef">5.4. </a><a href="#name-event-dns_query_finished" class="section-name selfRef">Event: dns_query_finished</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.4-1">
+<pre>
+HEDNSQueryFinished = {
+        he_session_id: string
+        dns_id: string
+        hostname: string
+        results: [HEDNSResult]
+        error_code: string ?
+        error_message: string ?
+        duration_ms: uint32
+
+        * $$he-dnsqueryfinished-extension
+}
+</pre><a href="#section-5.4-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-candidatediscovered">
+<section id="section-5.5">
+        <h3 id="name-event-candidate_discovered">
+<a href="#section-5.5" class="section-number selfRef">5.5. </a><a href="#name-event-candidate_discovered" class="section-name selfRef">Event: candidate_discovered</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.5-1">
+<pre>
+HECandidateDiscovered = {
+        he_session_id: string
+        source: "dns" | "cache" | "alt_svc" | "synth" | "preconnect"
+        target: HEAttemptTarget
+        rank: uint32
+
+        * $$he-candidatediscovered-extension
+}
+</pre><a href="#section-5.5-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-attemptscheduled">
+<section id="section-5.6">
+        <h3 id="name-event-attempt_scheduled">
+<a href="#section-5.6" class="section-number selfRef">5.6. </a><a href="#name-event-attempt_scheduled" class="section-name selfRef">Event: attempt_scheduled</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.6-1">
+<pre>
+HEAttemptScheduled = {
+        he_session_id: string
+        attempt_id: string
+        target: HEAttemptTarget
+        scheduled_after_ms: uint32
+        priority: uint32
+        reason:
+                "policy_timer" |
+                "dns_completed" |
+                "racing_window" |
+                "retry"
+
+        * $$he-attemptscheduled-extension
+}
+</pre><a href="#section-5.6-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-attemptstarted">
+<section id="section-5.7">
+        <h3 id="name-event-attempt_started">
+<a href="#section-5.7" class="section-number selfRef">5.7. </a><a href="#name-event-attempt_started" class="section-name selfRef">Event: attempt_started</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.7-1">
+<pre>
+HEAttemptStarted = {
+        he_session_id: string
+        attempt_id: string
+        target: HEAttemptTarget
+        transport: "tcp" | "quic"
+        ref_event_id: string ?
+
+        * $$he-attemptstarted-extension
+}
+</pre><a href="#section-5.7-1" class="pilcrow">¶</a>
+</div>
+<p id="section-5.7-2">QUIC implementations should set <code>ref_event_id</code> to the relevant <code>connectivity:connection_started</code>.<a href="#section-5.7-2" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="event-attemptoutcome">
+<section id="section-5.8">
+        <h3 id="name-event-attempt_outcome">
+<a href="#section-5.8" class="section-number selfRef">5.8. </a><a href="#name-event-attempt_outcome" class="section-name selfRef">Event: attempt_outcome</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.8-1">
+<pre>
+HEAttemptOutcome = {
+        he_session_id: string
+        attempt_id: string
+        result: "success" | "failure" | "timeout" | "canceled"
+        error_code: string ?
+        connect_duration_ms: uint32 ?
+
+        * $$he-attemptoutcome-extension
+}
+</pre><a href="#section-5.8-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-racingwindowopened">
+<section id="section-5.9">
+        <h3 id="name-event-racing_window_opened">
+<a href="#section-5.9" class="section-number selfRef">5.9. </a><a href="#name-event-racing_window_opened" class="section-name selfRef">Event: racing_window_opened</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.9-1">
+<pre>
+HERacingWindowOpened = {
+        he_session_id: string
+        window_id: string
+        max_parallel_attempts: uint32
+
+        * $$he-racingwindowopened-extension
+}
+</pre><a href="#section-5.9-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-racingwindowclosed">
+<section id="section-5.10">
+        <h3 id="name-event-racing_window_closed">
+<a href="#section-5.10" class="section-number selfRef">5.10. </a><a href="#name-event-racing_window_closed" class="section-name selfRef">Event: racing_window_closed</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.10-1">
+<pre>
+HERacingWindowClosed = {
+        he_session_id: string
+        window_id: string
+
+        * $$he-racingwindowclosed-extension
+}
+</pre><a href="#section-5.10-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-fallbacktimerset">
+<section id="section-5.11">
+        <h3 id="name-event-fallback_timer_set">
+<a href="#section-5.11" class="section-number selfRef">5.11. </a><a href="#name-event-fallback_timer_set" class="section-name selfRef">Event: fallback_timer_set</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.11-1">
+<pre>
+HEFallbackTimerSet = {
+        he_session_id: string
+        timer_id: string
+        delay_ms: uint32
+        for_family: "ipv4" | "ipv6"
+
+        * $$he-fallbacktimerset-extension
+}
+</pre><a href="#section-5.11-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-fallbacktimerfired">
+<section id="section-5.12">
+        <h3 id="name-event-fallback_timer_fired">
+<a href="#section-5.12" class="section-number selfRef">5.12. </a><a href="#name-event-fallback_timer_fired" class="section-name selfRef">Event: fallback_timer_fired</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.12-1">
+<pre>
+HEFallbackTimerFired = {
+        he_session_id: string
+        timer_id: string
+
+        * $$he-fallbacktimerfired-extension
+}
+</pre><a href="#section-5.12-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-fallbacktimercanceled">
+<section id="section-5.13">
+        <h3 id="name-event-fallback_timer_cancel">
+<a href="#section-5.13" class="section-number selfRef">5.13. </a><a href="#name-event-fallback_timer_cancel" class="section-name selfRef">Event: fallback_timer_canceled</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.13-1">
+<pre>
+HEFallbackTimerCanceled = {
+        he_session_id: string,
+        timer_id: string,
+        reason: "success” | “abort"
+
+        * $$he-fallbacktimercanceled-extension
+}
+</pre><a href="#section-5.13-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-connectionselected">
+<section id="section-5.14">
+        <h3 id="name-event-connection_selected">
+<a href="#section-5.14" class="section-number selfRef">5.14. </a><a href="#name-event-connection_selected" class="section-name selfRef">Event: connection_selected</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.14-1">
+<pre>
+HEConnectionSelected = {
+        he_session_id: string
+        attempt_id: string
+        ref_event_id: string ?
+
+        * $$he-connectionselected-extension
+}
+</pre><a href="#section-5.14-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-connectionaborted">
+<section id="section-5.15">
+        <h3 id="name-event-connection_aborted">
+<a href="#section-5.15" class="section-number selfRef">5.15. </a><a href="#name-event-connection_aborted" class="section-name selfRef">Event: connection_aborted</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.15-1">
+<pre>
+HEConnectionAborted = {
+        he_session_id: string
+        reason: string
+
+        * $$he-connectionaborted-extension
+}
+</pre><a href="#section-5.15-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="event-metrics">
+<section id="section-5.16">
+        <h3 id="name-event-metrics">
+<a href="#section-5.16" class="section-number selfRef">5.16. </a><a href="#name-event-metrics" class="section-name selfRef">Event: metrics</a>
+        </h3>
+<div class="lang-cddl sourcecode" id="section-5.16-1">
+<pre>
+HEMetrics = {
+        he_session_id: string
+        tt_first_success_ms: uint32 ?
+        first_success_family: "ipv4" | "ipv6" ?
+        attempts_total: uint32
+        attempts_success: uint32
+        attempts_failure: uint32
+
+        * $$he-metrics-extension
+}
+</pre><a href="#section-5.16-1" class="pilcrow">¶</a>
+</div>
+</section>
+</div>
+<div id="conformance-requirements">
+<section id="section-5.17">
+        <h3 id="name-conformance-requirements">
+<a href="#section-5.17" class="section-number selfRef">5.17. </a><a href="#name-conformance-requirements" class="section-name selfRef">Conformance Requirements</a>
+        </h3>
+<ul class="normal">
+<li class="normal" id="section-5.17-1.1">
+            <p id="section-5.17-1.1.1">Every <code>attempt_started</code> <span class="bcp14">MUST</span> have exactly one <code>attempt_outcome</code>.<a href="#section-5.17-1.1.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.17-1.2">
+            <p id="section-5.17-1.2.1"><code>connection_selected</code> <span class="bcp14">MUST</span> reference an attempt whose <code>result</code> is <code>"success"</code>.<a href="#section-5.17-1.2.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.17-1.3">
+            <p id="section-5.17-1.3.1">Exactly one <code>metrics</code> event <span class="bcp14">SHOULD</span> appear per HE session.<a href="#section-5.17-1.3.1" class="pilcrow">¶</a></p>
+</li>
+        </ul>
+</section>
+</div>
+</section>
+</div>
+<div id="correlation-with-transport-protocols">
+<section id="section-6">
+      <h2 id="name-correlation-with-transport-">
+<a href="#section-6" class="section-number selfRef">6. </a><a href="#name-correlation-with-transport-" class="section-name selfRef">Correlation with transport protocols</a>
+      </h2>
+<p id="section-6-1">TCP/TLS implementation can correlate HE events with:<a href="#section-6-1" class="pilcrow">¶</a></p>
+<ul class="normal">
+<li class="normal" id="section-6-2.1">
+          <p id="section-6-2.1.1"><code>tls:handshake_started</code><a href="#section-6-2.1.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-2.2">
+          <p id="section-6-2.2.1"><code>tls:handshake_complete</code><a href="#section-6-2.2.1" class="pilcrow">¶</a></p>
+</li>
+        <li class="normal" id="section-6-2.3">
+          <p id="section-6-2.3.1">TCP state transitions (if available in logs)<a href="#section-6-2.3.1" class="pilcrow">¶</a></p>
+</li>
+      </ul>
+<p id="section-6-3">TBD<a href="#section-6-3" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="security-considerations">
+<section id="section-7">
+      <h2 id="name-security-considerations">
+<a href="#section-7" class="section-number selfRef">7. </a><a href="#name-security-considerations" class="section-name selfRef">Security Considerations</a>
+      </h2>
+<p id="section-7-1">TBD<a href="#section-7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-considerations">
-<section id="section-4">
+<section id="section-8">
       <h2 id="name-iana-considerations">
-<a href="#section-4" class="section-number selfRef">4. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
+<a href="#section-8" class="section-number selfRef">8. </a><a href="#name-iana-considerations" class="section-name selfRef">IANA Considerations</a>
       </h2>
-<p id="section-4-1">This document has no IANA actions.<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-8-1">This document registers a new entry in the "qlog event schema URIs" registry (created in {Section 15 of QLOG-MAIN}):<a href="#section-8-1" class="pilcrow">¶</a></p>
+<span class="break"></span><dl class="dlParallel" id="section-8-2">
+        <dt id="section-8-2.1">Event schema URI:</dt>
+        <dd style="margin-left: 1.5em" id="section-8-2.2">
+          <p id="section-8-2.2.1">urn:ietf:params:qlog:events:hev3<a href="#section-8-2.2.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-8-2.3">Namespace:</dt>
+        <dd style="margin-left: 1.5em" id="section-8-2.4">
+          <p id="section-8-2.4.1">nev3<a href="#section-8-2.4.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-8-2.5">Event Types:</dt>
+        <dd style="margin-left: 1.5em" id="section-8-2.6">
+          <p id="section-8-2.6.1">config_set, config_updated, dns_query_started, dns_query_finished, candidate_discovered, attempt_scheduled, attempt_started, attempt_outcome, racing_window_opened, racing_window_closed, fallback_timer_set, fallback_timer_fired, fallback_timer_canceled, connection_selected, connection_aborted, metrics<a href="#section-8-2.6.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-8-2.7">Description:</dt>
+        <dd style="margin-left: 1.5em" id="section-8-2.8">
+          <p id="section-8-2.8.1">Event definitions for logging HEv3 events<a href="#section-8-2.8.1" class="pilcrow">¶</a></p>
+</dd>
+        <dd class="break"></dd>
+<dt id="section-8-2.9">Reference:</dt>
+        <dd style="margin-left: 1.5em" id="section-8-2.10">
+          <p id="section-8-2.10.1">This document<a href="#section-8-2.10.1" class="pilcrow">¶</a></p>
+</dd>
+      <dd class="break"></dd>
+</dl>
 </section>
 </div>
 <div id="sec-normative-references">
-<section id="section-5">
+<section id="section-9">
       <h2 id="name-normative-references">
-<a href="#section-5" class="section-number selfRef">5. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
+<a href="#section-9" class="section-number selfRef">9. </a><a href="#name-normative-references" class="section-name selfRef">Normative References</a>
       </h2>
 <dl class="references">
+<dt id="QLOG-MAIN">[QLOG-MAIN]</dt>
+      <dd>
+<span class="refAuthor">Marx, R.</span>, <span class="refAuthor">Niccolini, L.</span>, <span class="refAuthor">Seemann, M.</span>, and <span class="refAuthor">L. Pardue</span>, <span class="refTitle">"qlog: Structured Logging for Network Protocols"</span>, <span class="refContent">Work in Progress</span>, <span class="seriesInfo">Internet-Draft, draft-ietf-quic-qlog-main-schema-13</span>, <time datetime="2025-10-20" class="refDate">20 October 2025</time>, <span>&lt;<a href="https://datatracker.ietf.org/doc/html/draft-ietf-quic-qlog-main-schema-13">https://datatracker.ietf.org/doc/html/draft-ietf-quic-qlog-main-schema-13</a>&gt;</span>. </dd>
+<dd class="break"></dd>
 <dt id="RFC2119">[RFC2119]</dt>
       <dd>
 <span class="refAuthor">Bradner, S.</span>, <span class="refTitle">"Key words for use in RFCs to Indicate Requirement Levels"</span>, <span class="seriesInfo">BCP 14</span>, <span class="seriesInfo">RFC 2119</span>, <span class="seriesInfo">DOI 10.17487/RFC2119</span>, <time datetime="1997-03" class="refDate">March 1997</time>, <span>&lt;<a href="https://www.rfc-editor.org/rfc/rfc2119">https://www.rfc-editor.org/rfc/rfc2119</a>&gt;</span>. </dd>
@@ -1227,8 +1835,7 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <section id="appendix-A">
       <h2 id="name-acknowledgments">
 <a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
-      </h2>
-<p id="appendix-A-1">TODO acknowledge.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
+    </h2>
 </section>
 </div>
 <div id="authors-addresses">
@@ -1237,11 +1844,11 @@ appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶<
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>
 <address class="vcard">
-        <div dir="auto" class="left"><span class="fn nameRole">Your Name Here</span></div>
-<div dir="auto" class="left"><span class="org">Your Organization Here</span></div>
+        <div dir="auto" class="left"><span class="fn nameRole">Mirja Kühlewind</span></div>
+<div dir="auto" class="left"><span class="org">Ericsson</span></div>
 <div class="email">
 <span>Email:</span>
-<a href="mailto:your.email@example.com" class="email">your.email@example.com</a>
+<a href="mailto:mirja.kuehlewind@ercisson.com" class="email">mirja.kuehlewind@ercisson.com</a>
 </div>
 </address>
 </section>
