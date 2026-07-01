@@ -98,6 +98,7 @@ The namespace identifier itself is not affected by this requirement.
 
 ## Attempt Target
 
+~~~ cddl
 HEAttemptTarget = {
 	address: string
 	port: uint16
@@ -107,9 +108,11 @@ HEAttemptTarget = {
 
 	* $he-attempttarget-extension
 }
+~~~
 
 ## Policy
 
+~~~ cddl
 HEPolicy = {
 	base_delay_ms: uint32
 	jitter_ms: uint32
@@ -125,6 +128,7 @@ HEPolicy = {
 
 	* $he-policy-extension
 }
+~~~
 
 If omitted, `success_definition` defaults to:
 
@@ -133,12 +137,14 @@ If omitted, `success_definition` defaults to:
 
 ## DNS Result
 
+~~~ cddl
 HEDNSResult = {
 	address: string
 	family: "ipv4" | "ipv6"
 	ttl_s: uint32 ?
 	priority: uint32 ?
 }
+~~~
 
 # Event Definitions
 
@@ -148,6 +154,7 @@ with the <event> type identifier defined below in the section headings.
 
 ## Event: config_set
 
+~~~ cddl
 HEConfigSet = {
 	he_session_id: string
 	policy: HEPolicy,
@@ -159,9 +166,11 @@ HEConfigSet = {
 
 	* $$he-configset-extension
 }
+~~~
 
 ## Event: config_updated
 
+~~~ cddl
 HEConfigUpdated = {
 	he_session_id: string
 	changed: HEPolicy
@@ -173,21 +182,25 @@ HEConfigUpdated = {
 
 	* $$he-configupdated-extension
 }
+~~~
 
 ## Event: dns_query_started
 
+~~~ cddl
 HEDNSQueryStarted = {
 	he_session_id: string
 	dns_id: string
 	hostname: string
-	qtypes: [+ "A" | "AAAA"]
+	qtypes: [ "A" | "AAAA"]+
 	bootstrap_hint: string ?
 
 	* $$he-dnsquerystarted-extension
 }
+~~~
 
 ## Event: dns_query_finished
 
+~~~ cddl
 HEDNSQueryFinished = {
 	he_session_id: string
 	dns_id: string
@@ -199,9 +212,11 @@ HEDNSQueryFinished = {
 
 	* $$he-dnsqueryfinished-extension
 }
+~~~
 
 ## Event: candidate_discovered
 
+~~~ cddl
 HECandidateDiscovered = {
 	he_session_id: string
 	source: "dns" | "cache" | "alt_svc" | "synth" | "preconnect"
@@ -210,9 +225,11 @@ HECandidateDiscovered = {
 
 	* $$he-candidatediscovered-extension
 }
+~~~
 
 ## Event: attempt_scheduled
 
+~~~ cddl
 HEAttemptScheduled = {
 	he_session_id: string
 	attempt_id: string
@@ -227,9 +244,11 @@ HEAttemptScheduled = {
 
 	* $$he-attemptscheduled-extension
 }
+~~~
 
 ## Event: attempt_started
 
+~~~ cddl
 HEAttemptStarted = {
 	he_session_id: string
 	attempt_id: string
@@ -239,11 +258,13 @@ HEAttemptStarted = {
 
 	* $$he-attemptstarted-extension
 }
+~~~
 
 QUIC implementations should set `ref_event_id` to the relevant `connectivity:connection_started`.
 
 ## Event: attempt_outcome
 
+~~~ cddl
 HEAttemptOutcome = {
 	he_session_id: string
 	attempt_id: string
@@ -253,9 +274,11 @@ HEAttemptOutcome = {
 
 	* $$he-attemptoutcome-extension
 }
+~~~
 
 ## Event: racing_window_opened
 
+~~~ cddl
 HERacingWindowOpened = {
 	he_session_id: string
 	window_id: string
@@ -263,18 +286,22 @@ HERacingWindowOpened = {
 
 	* $$he-racingwindowopened-extension
 }
+~~~
 
 ## Event: racing_window_closed
 
+~~~ cddl
 HERacingWindowClosed = {
 	he_session_id: string
 	window_id: string
 
 	* $$he-racingwindowclosed-extension
 }
+~~~
 
 ## Event: fallback_timer_set
 
+~~~ cddl
 HEFallbackTimerSet = {
 	he_session_id: string
 	timer_id: string
@@ -283,18 +310,22 @@ HEFallbackTimerSet = {
 
 	* $$he-fallbacktimerset-extension
 }
+~~~
 
 ## Event: fallback_timer_fired
 
+~~~ cddl
 HEFallbackTimerFired = {
 	he_session_id: string
   	timer_id: string
 
 	* $$he-fallbacktimerfired-extension
 }
+~~~
 
 ## Event: fallback_timer_canceled
 
+~~~ cddl
 HEFallbackTimerCanceled = {
 	he_session_id: string,
  	timer_id: string,
@@ -302,9 +333,11 @@ HEFallbackTimerCanceled = {
 
 	* $$he-fallbacktimercanceled-extension
 }
+~~~
 
 ## Event: connection_selected
 
+~~~ cddl
 HEConnectionSelected = {
 	he_session_id: string
 	attempt_id: string
@@ -312,18 +345,22 @@ HEConnectionSelected = {
 
 	* $$he-connectionselected-extension
 }
+~~~
 
 ## Event: connection_aborted
 
+~~~ cddl
 HEConnectionAborted = {
 	he_session_id: string
 	reason: string
 
 	* $$he-connectionaborted-extension
 }
+~~~
 
 ## Event: metrics
 
+~~~ cddl
 HEMetrics = {
 	he_session_id: string
 	tt_first_success_ms: uint32 ?
@@ -334,6 +371,7 @@ HEMetrics = {
 
 	* $$he-metrics-extension
 }
+~~~
 
 ## Conformance Requirements
 
