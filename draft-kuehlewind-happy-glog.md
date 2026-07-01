@@ -9,8 +9,8 @@ number:
 date:
 consensus: true
 v: 3
-area: WIT
-workgroup: happy
+area: "Web and Internet Transport"
+workgroup: "Heuristics and Algorithms to Prioritize Protocol deploYment"
 
 ipr: trust200902
 stand_alone: yes
@@ -23,12 +23,12 @@ keyword:
  - qlog
  - HEv3
 venue:
-  group: WG
-  type: Working Group
-  mail: WG@example.com
-  arch: https://example.com/WG
-  github: USER/REPO
-  latest: https://example.com/LATEST
+  group: "Heuristics and Algorithms to Prioritize Protocol deploYment"
+  type: "Working Group"
+  mail: "happy@ietf.org"
+  arch: "https://mailarchive.ietf.org/arch/browse/happy/"
+  github: "mirjak/draft-happy-glog"
+  latest: "https://mirjak.github.io/draft-happy-glog/draft-kuehlewind-happy-glog.html"
 
 author:
  -
@@ -50,7 +50,7 @@ This document specifies a qlog extension for Happy Eyeballs v3 (HEv3), enabling
 logging of dual-stack connection racing behavior. It defines a dedicated
 event category, event names, and JSON data structures that capture DNS timing,
 candidate discovery, attempt scheduling, fallback timers, racing windows,
-success/failure outcomes, and summary metrics. 
+success/failure outcomes, and summary metrics.
 
 --- middle
 
@@ -268,8 +268,8 @@ QUIC implementations should set `ref_event_id` to the relevant `connectivity:con
 HEAttemptOutcome = {
 	he_session_id: string
 	attempt_id: string
-	result: "success" | "failure" | "timeout" | "canceled" 
-	error_code: string ? 
+	result: "success" | "failure" | "timeout" | "canceled"
+	error_code: string ?
 	connect_duration_ms: uint32 ?
 
 	* $$he-attemptoutcome-extension
@@ -399,7 +399,7 @@ TBD
 
 This document registers a new entry in the "qlog event schema URIs" registry (created in {Section 15 of QLOG-MAIN}):
 
-Event schema URI: 
+Event schema URI:
 : urn:ietf:params:qlog:events:hev3
 
 Namespace:
