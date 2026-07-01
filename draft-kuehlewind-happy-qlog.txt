@@ -9,7 +9,7 @@ Expires: 2 January 2027
 
 
             Happy Eyeballs v3 (HEv3) Event Logging with qlog
-                   draft-kuehlewind-happy-glog-latest
+                   draft-kuehlewind-happy-qlog-latest
 
 Abstract
 
@@ -28,7 +28,7 @@ About This Document
    The latest revision of this draft can be found at
    https://mirjak.github.io/draft-happy-glog/draft-kuehlewind-happy-
    glog.html.  Status information for this document may be found at
-   https://datatracker.ietf.org/doc/draft-kuehlewind-happy-glog/.
+   https://datatracker.ietf.org/doc/draft-kuehlewind-happy-qlog/.
 
    Discussion of this document takes place on the Heuristics and
    Algorithms to Prioritize Protocol deploYment Working Group mailing
