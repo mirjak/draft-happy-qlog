@@ -14,10 +14,11 @@ Expires: 2 January 2027
 Abstract
 
    This document specifies a qlog extension for Happy Eyeballs v3
-   (HEv3), enabling logging of dual-stack connection racing behavior.
-   It defines a dedicated event category, event names, and JSON data
-   structures that capture DNS timing, candidate discovery, attempt
-   scheduling, fallback timers, racing windows, success/failure
+   (HEv3), enabling logging of dual-stack and multi-protocol connection
+   racing behavior.  It defines a dedicated event schema, event names,
+   and data structures that capture DNS resolution timing, SVCB/HTTPS
+   service discovery, candidate sorting and grouping, connection attempt
+   scheduling and racing, NAT64 prefix discovery, success/failure
    outcomes, and summary metrics.
 
 About This Document
@@ -84,24 +85,23 @@ Table of Contents
      5.2.  Event: config_updated
      5.3.  Event: dns_query_started
      5.4.  Event: dns_query_finished
-     5.5.  Event: candidate_discovered
-     5.6.  Event: candidates_sorted
-     5.7.  Event: candidate_removed
-     5.8.  Event: candidates_resorted
-     5.9.  Event: attempt_scheduled
-     5.10. Event: attempt_started
-     5.11. Event: attempt_pended
-     5.12. Event: attempt_resumed
-     5.13. Event: attempt_outcome
-     5.14. Event: racing_window_opened
-     5.15. Event: racing_window_closed
-     5.16. Event: fallback_timer_set
-     5.17. Event: fallback_timer_fired
-     5.18. Event: fallback_timer_canceled
-     5.19. Event: connection_selected
-     5.20. Event: connection_aborted
-     5.21. Event: metrics
-     5.22. Conformance Requirements
+     5.5.  Event: nat64_prefix_discovered
+     5.6.  Event: candidate_discovered
+     5.7.  Event: candidates_sorted
+     5.8.  Event: candidate_removed
+     5.9.  Event: candidates_resorted
+     5.10. Event: attempt_scheduled
+     5.11. Event: attempt_started
+     5.12. Event: attempt_pended
+     5.13. Event: attempt_resumed
+     5.14. Event: attempt_outcome
+     5.15. Event: next_attempt_timer_set
+     5.16. Event: next_attempt_timer_fired
+     5.17. Event: next_attempt_timer_canceled
+     5.18. Event: connection_selected
+     5.19. Event: connection_aborted
+     5.20. Event: metrics
+     5.21. Conformance Requirements
    6.  Correlation with transport protocols
    7.  Security Considerations
    8.  IANA Considerations
@@ -111,27 +111,15 @@ Table of Contents
 
 1.  Introduction
 
-   Happy Eyeballs helps application to reduce connection latency on
-   dual-stack networks.  Happy Eyeballs v3 (HEv3) extents racing From
-   IPv4/IPv6 only to e.g. include TCP+TLS, QUIC/HTTP/3.  Further HEv3 is
-   expected to provide more detailed logging such that connection
-   failures can be discovered and eventually fixed.  This document
-   defines a qlog extension that provides logging and visibility into
-   HEv3 decision-making and timing.
-
-   The extension covers:
-
-   *  Logging of DNS queries and resolution timing.
-
-   *  Candidate address discovery and ranking.
-
-   *  Scheduling, cancellation, or execution of connection attempts.
-
-   *  Fallback timer management and racing windows.
-
-   *  Success, failure, and timeout results.
-
-   *  End-to-end metrics summarizing the HE session.
+   Happy Eyeballs helps applications reduce connection latency on dual-
+   stack networks.  Happy Eyeballs v3 (HEv3) extends racing from IPv4/
+   IPv6 to include TCP+TLS and QUIC/HTTP3, and incorporates SVCB/HTTPS
+   service discovery.  Detailed logging of HEv3 behavior enables
+   operators and developers to diagnose connection establishment
+   failures and identify network issues that would otherwise be hidden
+   by the racing algorithm.  This document defines a qlog event schema
+   that provides logging and visibility into HEv3 decision-making and
+   timing.
 
 2.  Conventions and Definitions
 
@@ -220,7 +208,7 @@ Table of Contents
       the absence of RTT data (recommended 250ms).
 
    *  min_connection_attempt_delay_ms: Floor for the connection attempt
-      delay (recommended 100ms, MUST NOT be less than 10ms).
+      delay (recommended 100ms, must not be less than 10ms).
 
    *  max_connection_attempt_delay_ms: Ceiling for the connection
       attempt delay (recommended 2s).
@@ -290,35 +278,68 @@ Table of Contents
    Each event uses:  name: "hev3:<event>" with the <event> type
    identifier defined below in the section headings.
 
+   All events include a he_session_id field that uniquely identifies the
+   Happy Eyeballs session.  This allows correlation of all events
+   belonging to a single connection establishment attempt.
+
 5.1.  Event: config_set
+
+   Logged when the HE policy is initially configured for a session.
 
    HEConfigSet = {
            he_session_id: text
            policy: HEPolicy,
            reason:
-                   "startup" |
-                   "network_change" |
-                   "app_config" |
+                   "startup" /
+                   "network_change" /
+                   "app_config" /
                    "persisted_state"
 
            * $$he-configset-extension
    }
 
+   The policy field contains the full initial policy configuration.  The
+   reason field indicates what triggered the configuration:
+
+   *  "startup": Default policy applied at application start.
+
+   *  "network_change": Policy set in response to a network transition.
+
+   *  "app_config": Policy provided by the application.
+
+   *  "persisted_state": Policy restored from previously saved state.
+
 5.2.  Event: config_updated
+
+   Logged when the HE policy changes during a session.
 
    HEConfigUpdated = {
            he_session_id: text
            changed: HEPolicy
            reason:
-                   "network_change" |
-                   "admin" |
-                   "app_hint" |
+                   "network_change" /
+                   "admin" /
+                   "app_hint" /
                    "learned_preference"
 
            * $$he-configupdated-extension
    }
 
+   The changed field contains the updated policy configuration.  The
+   reason field indicates what triggered the update:
+
+   *  "network_change": Policy updated due to a network transition.
+
+   *  "admin": Policy changed by an administrator or system setting.
+
+   *  "app_hint": Application provided updated preferences.
+
+   *  "learned_preference": Policy adjusted based on observed behavior
+      (e.g., learned RTT data).
+
 5.3.  Event: dns_query_started
+
+   Logged when a DNS query is initiated as part of hostname resolution.
 
    HEDNSQueryStarted = {
            he_session_id: text
@@ -329,6 +350,12 @@ Table of Contents
 
            * $$he-dnsquerystarted-extension
    }
+
+   The dns_id uniquely identifies this query within the session and is
+   used to correlate with the corresponding dns_query_finished event.
+   The hostname is the name being resolved.  The qtypes array lists the
+   DNS record types being queried.  The bootstrap_hint field optionally
+   contains an address hint used to reach the DNS resolver itself.
 
 5.4.  Event: dns_query_finished
 
@@ -356,7 +383,30 @@ Table of Contents
    is_alias_follow field is set to true when this query was triggered by
    an AliasMode SVCB/HTTPS record requiring a follow-up resolution.
 
-5.5.  Event: candidate_discovered
+5.5.  Event: nat64_prefix_discovered
+
+   Logged when the client discovers a NAT64 prefix for use on an
+   IPv6-only network (Section 8 of HEv3).
+
+   HENat64PrefixDiscovered = {
+           he_session_id: text
+           prefix: text
+           prefix_length: uint32
+           source: "pref64_ra" / "rfc7050_discovery" / "dns64_inferred"
+
+           * $$he-nat64prefixdiscovered-extension
+   }
+
+   The source field indicates how the prefix was obtained:
+
+   *  "pref64_ra": Learned from a Router Advertisement (RFC 8781).
+
+   *  "rfc7050_discovery": Discovered via the well-known name lookup
+      (RFC 7050).
+
+   *  "dns64_inferred": Inferred from DNS64 behavior on the network.
+
+5.6.  Event: candidate_discovered
 
    HECandidateDiscovered = {
            he_session_id: text
@@ -380,7 +430,7 @@ Table of Contents
    candidate replaces once authoritative A/AAAA records arrive (per
    Section 7 of HEv3).
 
-5.6.  Event: candidates_sorted
+5.7.  Event: candidates_sorted
 
    Logged once sufficient DNS answers have been received (per
    Section 4.2 of HEv3) and the implementation has applied the three-
@@ -411,7 +461,7 @@ Table of Contents
       endpoints in this group (Section 5.1 of HEv3).
 
    *  service_priority reflects the SVCB SvcPriority value for this
-      group (Section 5.2 of HEv3).  Groups with equal priority SHOULD be
+      group (Section 5.2 of HEv3).  Groups with equal priority are
       shuffled randomly.
 
    *  candidates is ordered per Section 5.3 of HEv3: RFC 6724
@@ -421,7 +471,7 @@ Table of Contents
    For simple cases without SVCB records, a single group with all
    candidates is sufficient.
 
-5.7.  Event: candidate_removed
+5.8.  Event: candidate_removed
 
    Logged when a candidate address is removed from the list during
    connection setup (per Section 7 of HEv3).
@@ -450,10 +500,10 @@ Table of Contents
       client supports (Section 6.2 of HEv3).
 
    The had_active_attempt field indicates whether an in-progress attempt
-   exists for this target; per HEv3 Section 7, such attempts SHOULD NOT
-   be canceled.
+   exists for this target; per HEv3 Section 7, such attempts are not
+   canceled.
 
-5.8.  Event: candidates_resorted
+5.9.  Event: candidates_resorted
 
    Logged when the candidate list is re-sorted due to new addresses
    arriving mid-race (per Section 7 of HEv3).  Re-sorting ensures that
@@ -483,39 +533,67 @@ Table of Contents
    rank.  Only pending candidates (those not yet attempted or currently
    in progress) are included.
 
-5.9.  Event: attempt_scheduled
+5.10.  Event: attempt_scheduled
+
+   Logged when a connection attempt is scheduled to start after a delay.
 
    HEAttemptScheduled = {
            he_session_id: text
            attempt_id: text
            target: HEAttemptTarget
            scheduled_after_ms: uint32
-           priority: uint32
            reason:
-                   "policy_timer" |
-                   "dns_completed" |
-                   "racing_window" |
-                   "retry"
+                   "policy_timer" /
+                   "dns_completed" /
+                   "resolution_delay_expired" /
+                   "racing_window" /
+                   "retry" /
+                   "last_resort_synthesis"
 
            * $$he-attemptscheduled-extension
    }
 
-5.10.  Event: attempt_started
+   The attempt_id uniquely identifies this attempt within the session.
+   The scheduled_after_ms field indicates the delay before the attempt
+   will start.  The reason field indicates what triggered scheduling:
+
+   *  "policy_timer": The Next Connection Attempt Timer fired.
+
+   *  "dns_completed": DNS resolution completed, enabling the first
+      attempt.
+
+   *  "resolution_delay_expired": The Resolution Delay timer expired
+      (Section 4.2 of HEv3).
+
+   *  "racing_window": Scheduled as part of parallel racing.
+
+   *  "retry": A retry of a previously failed attempt.
+
+   *  "last_resort_synthesis": The Last Resort Local Synthesis Delay
+      expired, triggering a fallback A query and NAT64 synthesis
+      (Section 8.4 of HEv3).
+
+5.11.  Event: attempt_started
+
+   Logged when a connection attempt begins (i.e., the first packet is
+   sent).
 
    HEAttemptStarted = {
            he_session_id: text
            attempt_id: text
            target: HEAttemptTarget
-           transport: "tcp" | "quic"
+           transport: "tcp" / "quic"
            ref_event_id: text ?
 
            * $$he-attemptstarted-extension
    }
 
-   QUIC implementations should set ref_event_id to the relevant
-   connectivity:connection_started.
+   The transport field indicates the transport protocol used for this
+   attempt.  The ref_event_id field may reference a related event in
+   another qlog event schema; QUIC implementations should set it to the
+   relevant connectivity:connection_started event.
 
-5.11.  Event: attempt_pended
+5.12.  Event: attempt_pended
 
    Logged when a connection attempt's TLS handshake must be paused until
    SVCB/HTTPS responses are received, as required by Section 6.3 of HEv3
@@ -531,10 +609,10 @@ Table of Contents
            * $$he-attemptpended-extension
    }
 
-   The waiting_for field MAY reference the dns_id of the outstanding
+   The waiting_for field may reference the dns_id of the outstanding
    SVCB/HTTPS query.
 
-5.12.  Event: attempt_resumed
+5.13.  Event: attempt_resumed
 
    Logged when a previously pended attempt resumes its handshake.
 
@@ -546,68 +624,106 @@ Table of Contents
            * $$he-attemptresumed-extension
    }
 
-5.13.  Event: attempt_outcome
+   The trigger field indicates what unblocked the attempt:
+
+   *  "svcb_received": The awaited SVCB/HTTPS response arrived.
+
+   *  "timeout": A timeout expired while waiting; proceeding without the
+      expected information.
+
+   *  "policy_override": The implementation decided to proceed despite
+      not receiving the expected response (e.g., opportunistic ECH).
+
+5.14.  Event: attempt_outcome
+
+   Logged when a connection attempt reaches a terminal state.
 
    HEAttemptOutcome = {
            he_session_id: text
            attempt_id: text
-           result: "success" | "failure" | "timeout" | "canceled"
+           result: "success" / "failure" / "timeout" / "canceled"
            error_code: text ?
            connect_duration_ms: uint32 ?
 
            * $$he-attemptoutcome-extension
    }
 
-5.14.  Event: racing_window_opened
+   The result field indicates the outcome:
 
-   HERacingWindowOpened = {
+   *  "success": The connection was established per the
+      success_definition in the policy.
+
+   *  "failure": The attempt failed (e.g., connection refused, TLS
+      error).
+
+   *  "timeout": The attempt timed out without completing.
+
+   *  "canceled": The attempt was canceled because another attempt
+      succeeded.
+
+   The error_code field contains a protocol-specific error code on
+   failure.  The connect_duration_ms field records the time from attempt
+   start to outcome.
+
+5.15.  Event: next_attempt_timer_set
+
+   Logged when the Next Connection Attempt Timer is set or adjusted.
+   This timer controls when the next connection attempt begins
+   (Section 6 of HEv3).
+
+   HENextAttemptTimerSet = {
            he_session_id: text
-           window_id: text
-           max_parallel_attempts: uint32
-
-           * $$he-racingwindowopened-extension
-   }
-
-5.15.  Event: racing_window_closed
-
-   HERacingWindowClosed = {
-           he_session_id: text
-           window_id: text
-
-           * $$he-racingwindowclosed-extension
-   }
-
-5.16.  Event: fallback_timer_set
-
-   HEFallbackTimerSet = {
-           he_session_id: text
-           timer_id: text
            delay_ms: uint32
-           for_family: "ipv4" | "ipv6"
+           reason: "initial" / "rtt_based" / "handshake_progress" ?
 
-           * $$he-fallbacktimerset-extension
+           * $$he-nextattemptimerset-extension
    }
 
-5.17.  Event: fallback_timer_fired
+   The reason field captures why the delay was chosen:
 
-   HEFallbackTimerFired = {
+   *  "initial": Using the configured Connection Attempt Delay.
+
+   *  "rtt_based": Delay derived from historical RTT data or estimated
+      retransmission timeout.
+
+   *  "handshake_progress": Timer extended after partial handshake
+      completion (e.g., TCP connected, waiting for TLS — per Section 6.1
+      of HEv3).
+
+5.16.  Event: next_attempt_timer_fired
+
+   Logged when the timer fires and the next connection attempt is
+   triggered.
+
+   HENextAttemptTimerFired = {
            he_session_id: text
-           timer_id: text
 
-           * $$he-fallbacktimerfired-extension
+           * $$he-nextattemptimerfired-extension
    }
 
-5.18.  Event: fallback_timer_canceled
+5.17.  Event: next_attempt_timer_canceled
 
-   HEFallbackTimerCanceled = {
-           he_session_id: text,
-           timer_id: text,
-           reason: "success” | “abort"
+   Logged when the timer is canceled before firing.
 
-           * $$he-fallbacktimercanceled-extension
+   HENextAttemptTimerCanceled = {
+           he_session_id: text
+           reason: "success" / "abort" / "list_exhausted"
+
+           * $$he-nextattemptimercanceled-extension
    }
 
-5.19.  Event: connection_selected
+   The reason field indicates why the timer was canceled:
+
+   *  "success": A connection attempt succeeded.
+
+   *  "abort": The HE session was aborted.
+
+   *  "list_exhausted": All candidates have been attempted.
+
+5.18.  Event: connection_selected
+
+   Logged when a successful connection attempt is chosen as the winning
+   connection for this HE session.
 
    HEConnectionSelected = {
            he_session_id: text
@@ -617,7 +733,14 @@ Table of Contents
            * $$he-connectionselected-extension
    }
 
-5.20.  Event: connection_aborted
+   The attempt_id identifies which attempt won.  The ref_event_id field
+   may reference the corresponding transport-level event (e.g., a QUIC
+   connectivity:connection_started or TLS handshake_complete).
+
+5.19.  Event: connection_aborted
+
+   Logged when the entire HE session fails without establishing any
+   connection.
 
    HEConnectionAborted = {
            he_session_id: text
@@ -626,12 +749,18 @@ Table of Contents
            * $$he-connectionaborted-extension
    }
 
-5.21.  Event: metrics
+   The reason field contains a human-readable or implementation-defined
+   description of why the session was aborted (e.g., "all attempts
+   failed", "no addresses resolved", "user canceled").
+
+5.20.  Event: metrics
+
+   Logged at the end of an HE session to provide summary statistics.
 
    HEMetrics = {
            he_session_id: text
            tt_first_success_ms: uint32 ?
-           first_success_family: "ipv4" | "ipv6" ?
+           first_success_family: "ipv4" / "ipv6" ?
            attempts_total: uint32
            attempts_success: uint32
            attempts_failure: uint32
@@ -639,7 +768,23 @@ Table of Contents
            * $$he-metrics-extension
    }
 
-5.22.  Conformance Requirements
+   The fields capture end-to-end session statistics:
+
+   *  tt_first_success_ms: Time from session start to the first
+      successful connection attempt (i.e., time-to-first-byte
+      readiness).
+
+   *  first_success_family: The address family of the first successful
+      attempt.
+
+   *  attempts_total: Total number of connection attempts initiated.
+
+   *  attempts_success: Number of attempts that completed successfully.
+
+   *  attempts_failure: Number of attempts that failed, timed out, or
+      were canceled.
+
+5.21.  Conformance Requirements
 
    *  Every attempt_started MUST have exactly one attempt_outcome.
 
@@ -671,14 +816,14 @@ Table of Contents
 
    Event schema URI:  urn:ietf:params:qlog:events:hev3
 
-   Namespace:  nev3
+   Namespace:  hev3
 
    Event Types:  config_set, config_updated, dns_query_started,
-      dns_query_finished, candidate_discovered, candidates_sorted,
-      candidate_removed, candidates_resorted, attempt_scheduled,
-      attempt_started, attempt_pended, attempt_resumed, attempt_outcome,
-      racing_window_opened, racing_window_closed, fallback_timer_set,
-      fallback_timer_fired, fallback_timer_canceled,
+      dns_query_finished, nat64_prefix_discovered, candidate_discovered,
+      candidates_sorted, candidate_removed, candidates_resorted,
+      attempt_scheduled, attempt_started, attempt_pended,
+      attempt_resumed, attempt_outcome, next_attempt_timer_set,
+      next_attempt_timer_fired, next_attempt_timer_canceled,
       connection_selected, connection_aborted, metrics
 
    Description:  Event definitions for logging HEv3 events
@@ -694,6 +839,13 @@ Table of Contents
               schema-13, 20 October 2025,
               <https://datatracker.ietf.org/doc/html/draft-ietf-quic-
               qlog-main-schema-13>.
+
+   [HEV3]     Pauly, T., Schinazi, D., Jaju, N., and K. Ishibashi,
+              "Happy Eyeballs Version 3: Better Connectivity Using
+              Concurrency", Work in Progress, Internet-Draft, draft-
+              ietf-happy-happyeyeballs-v3-03, 2 March 2026,
+              <https://datatracker.ietf.org/doc/html/draft-ietf-happy-
+              happyeyeballs-v3-03>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
