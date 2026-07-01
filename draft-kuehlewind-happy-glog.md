@@ -59,23 +59,14 @@ success/failure outcomes, and summary metrics.
 
 # Introduction
 
-Happy Eyeballs helps application to reduce connection
-latency on dual-stack networks. Happy Eyeballs v3 (HEv3) extents racing
-From IPv4/IPv6 only to e.g. include TCP+TLS, QUIC/HTTP/3.
-Further HEv3 is expected to provide more detailed logging such that connection
-failures can be discovered and eventually fixed.
-This document defines a qlog extension that provides logging and visibility into HEv3
-decision-making and timing.
-
-The extension covers:
-
-* Logging of DNS queries, SVCB/HTTPS service discovery, and resolution timing.
-* Candidate address discovery, grouping, and sorting.
-* Scheduling, cancellation, or execution of connection attempts.
-* Connection attempt timer management and racing.
-* NAT64 prefix discovery and address synthesis.
-* Success, failure, and timeout results.
-* End-to-end metrics summarizing the HE session.
+Happy Eyeballs helps applications reduce connection latency on dual-stack
+networks. Happy Eyeballs v3 (HEv3) extends racing from IPv4/IPv6 to include
+TCP+TLS and QUIC/HTTP3, and incorporates SVCB/HTTPS service discovery.
+Detailed logging of HEv3 behavior enables operators and developers to
+diagnose connection establishment failures and identify network issues that
+would otherwise be hidden by the racing algorithm.
+This document defines a qlog event schema that provides logging and
+visibility into HEv3 decision-making and timing.
 
 
 # Conventions and Definitions
