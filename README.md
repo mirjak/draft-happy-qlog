@@ -4,7 +4,7 @@
 
 This is the working area for the individual Internet-Draft, "Happy Eyeballs v3 (HEv3) Event Logging with qlog".
 
-* [Editor's Copy](https://mirjak.github.io/draft-happy-glog/#go.draft-kuehlewind-happy-qlog.html)
+* [Editor's Copy](https://mirjak.github.io/draft-happy-qlog/#go.draft-kuehlewind-happy-qlog.html)
 * [Datatracker Page](https://datatracker.ietf.org/doc/draft-kuehlewind-happy-qlog)
 * [Individual Draft](https://datatracker.ietf.org/doc/html/draft-kuehlewind-happy-qlog)
 * [Compare Editor's Copy to Individual Draft](https://mirjak.github.io/draft-happy-qlog/#go.draft-kuehlewind-happy-qlog.diff)
