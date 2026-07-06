@@ -289,6 +289,9 @@ an address hint used to reach the DNS resolver itself.
 
 ## Event: dns_query_finished
 
+Logged when a DNS query completes with results, an error, or a negative
+response.
+
 ~~~ cddl
 HEDNSQueryFinished = {
 	he_session_id: text
