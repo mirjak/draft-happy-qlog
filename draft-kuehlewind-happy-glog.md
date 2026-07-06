@@ -203,10 +203,29 @@ HEDNSServiceResult = {
 }
 ~~~
 
-The `ech_config` field contains a base64-encoded ECHConfigList when present
-in the SVCB/HTTPS record. The `mode` field distinguishes AliasMode records
-(which require a follow-up query) from ServiceMode records that carry
-usable service parameters.
+The `mode` field distinguishes AliasMode records (which require a follow-up
+query) from ServiceMode records that carry usable service parameters.
+
+The following fields are defined for `HEDNSAddressResult`:
+
+* `type`: Always `"address"` for this variant.
+* `address`: The resolved IP address.
+* `family`: The address family, either `"ipv4"` or `"ipv6"`.
+* `ttl_s`: The DNS TTL in seconds.
+
+The following fields are defined for `HEDNSServiceResult`:
+
+* `type`: Always `"service"` for this variant.
+* `mode`: Either `"alias"` (AliasMode, requires follow-up query) or
+  `"servicemode"` (carries usable parameters).
+* `target_name`: The SVCB TargetName (use `"."` for the owner name).
+* `priority`: The SVCB SvcPriority value.
+* `alpn`: The list of supported application protocols from the `alpn` key.
+* `no_default_alpn`: Whether the `no-default-alpn` key is present.
+* `ech_config`: Base64-encoded ECHConfigList from the `ech` key.
+* `ipv4hint`: IPv4 address hints from the `ipv4hint` key.
+* `ipv6hint`: IPv6 address hints from the `ipv6hint` key.
+* `ttl_s`: The DNS TTL in seconds.
 
 # Event Definitions
 
