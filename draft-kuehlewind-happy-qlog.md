@@ -34,7 +34,7 @@ author:
  -
     fullname: Mirja Kühlewind
     organization: Ericsson
-    email: mirja.kuehlewind@ercisson.com
+    email: mirja.kuehlewind@ericsson.com
 
 normative:
   QLOG-MAIN:
