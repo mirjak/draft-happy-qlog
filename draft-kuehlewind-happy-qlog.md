@@ -3,7 +3,7 @@ title: "Happy Eyeballs v3 (HEv3) Event Logging with qlog"
 abbrev: "HEv3 qlog"
 category: info
 
-docname: draft-kuehlewind-happy-glog-latest
+docname: draft-kuehlewind-happy-qlog-latest
 submissiontype: IETF
 number:
 date:
