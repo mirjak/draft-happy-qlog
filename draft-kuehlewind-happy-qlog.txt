@@ -4,8 +4,8 @@
 
 Heuristics and Algorithms to Prioritize Protocol deploYment M. Kühlewind
 Internet-Draft                                                  Ericsson
-Intended status: Informational                               1 July 2026
-Expires: 2 January 2027
+Intended status: Informational                               6 July 2026
+Expires: 7 January 2027
 
 
             Happy Eyeballs v3 (HEv3) Event Logging with qlog
@@ -54,7 +54,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 January 2027.
+   This Internet-Draft will expire on 7 January 2027.
 
 Copyright Notice
 
@@ -168,11 +168,29 @@ Table of Contents
            * $he-attempttarget-extension
    }
 
-   The alpn field records the negotiated ALPN set for this target
-   derived from SVCB records.  The service_name and service_priority
-   fields identify which SVCB ServiceMode record this target originates
-   from.  The ech_offered field indicates whether ECH will be attempted
-   on this connection.
+   The following fields are defined:
+
+   *  address: The IP address of the target endpoint.
+
+   *  port: The destination port number.
+
+   *  family: The address family, either "ipv4" or "ipv6".
+
+   *  interface: The local network interface used for this attempt.
+
+   *  path_id: An implementation-defined identifier for the network
+      path.
+
+   *  alpn: The negotiated ALPN set for this target derived from SVCB
+      records.
+
+   *  service_name: The SVCB ServiceMode TargetName this target
+      originates from.
+
+   *  service_priority: The SVCB SvcPriority value for this target's
+      service.
+
+   *  ech_offered: Whether ECH will be attempted on this connection.
 
 4.2.  Policy
 
@@ -268,10 +286,43 @@ Table of Contents
            * $he-dnsserviceresult-extension
    }
 
-   The ech_config field contains a base64-encoded ECHConfigList when
-   present in the SVCB/HTTPS record.  The mode field distinguishes
-   AliasMode records (which require a follow-up query) from ServiceMode
-   records that carry usable service parameters.
+   The mode field distinguishes AliasMode records (which require a
+   follow-up query) from ServiceMode records that carry usable service
+   parameters.
+
+   The following fields are defined for HEDNSAddressResult:
+
+   *  type: Always "address" for this variant.
+
+   *  address: The resolved IP address.
+
+   *  family: The address family, either "ipv4" or "ipv6".
+
+   *  ttl_s: The DNS TTL in seconds.
+
+   The following fields are defined for HEDNSServiceResult:
+
+   *  type: Always "service" for this variant.
+
+   *  mode: Either "alias" (AliasMode, requires follow-up query) or
+      "servicemode" (carries usable parameters).
+
+   *  target_name: The SVCB TargetName (use "." for the owner name).
+
+   *  priority: The SVCB SvcPriority value.
+
+   *  alpn: The list of supported application protocols from the alpn
+      key.
+
+   *  no_default_alpn: Whether the no-default-alpn key is present.
+
+   *  ech_config: Base64-encoded ECHConfigList from the ech key.
+
+   *  ipv4hint: IPv4 address hints from the ipv4hint key.
+
+   *  ipv6hint: IPv6 address hints from the ipv6hint key.
+
+   *  ttl_s: The DNS TTL in seconds.
 
 5.  Event Definitions
 
@@ -836,16 +887,16 @@ Table of Contents
               Marx, R., Niccolini, L., Seemann, M., and L. Pardue,
               "qlog: Structured Logging for Network Protocols", Work in
               Progress, Internet-Draft, draft-ietf-quic-qlog-main-
-              schema-13, 20 October 2025,
+              schema-14, 6 July 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-quic-
-              qlog-main-schema-13>.
+              qlog-main-schema-14>.
 
    [HEV3]     Pauly, T., Schinazi, D., Jaju, N., and K. Ishibashi,
               "Happy Eyeballs Version 3: Better Connectivity Using
               Concurrency", Work in Progress, Internet-Draft, draft-
-              ietf-happy-happyeyeballs-v3-03, 2 March 2026,
+              ietf-happy-happyeyeballs-v3-04, 1 July 2026,
               <https://datatracker.ietf.org/doc/html/draft-ietf-happy-
-              happyeyeballs-v3-03>.
+              happyeyeballs-v3-04>.
 
    [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
               Requirement Levels", BCP 14, RFC 2119,
