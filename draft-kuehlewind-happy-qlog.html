@@ -2154,7 +2154,8 @@ description of why the session was aborted (e.g., "all attempts failed",
 <pre>
 HEMetrics = {
         he_session_id: text
-        total_duration_ms: uint32 ?
+        outcome: "success" / "aborted"
+        total_duration_ms: uint32
         tt_first_success_ms: uint32 ?
         first_success_family: "ipv4" / "ipv6" ?
         first_success_transport: "tcp" / "quic" ?
@@ -2169,31 +2170,37 @@ HEMetrics = {
 <p id="section-5.19-3">The fields capture end-to-end session statistics:<a href="#section-5.19-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.19-4.1">
-            <p id="section-5.19-4.1.1"><code>total_duration_ms</code>: Total time from session start to final outcome
-(connection selected or session aborted).<a href="#section-5.19-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.1.1"><code>outcome</code>: Whether the session established a connection (<code>"success"</code>) or
+failed entirely (<code>"aborted"</code>).<a href="#section-5.19-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.2">
-            <p id="section-5.19-4.2.1"><code>tt_first_success_ms</code>: Time from session start to the first successful
-connection attempt (i.e., time-to-first-byte readiness).<a href="#section-5.19-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.2.1"><code>total_duration_ms</code>: Total time from session start to final outcome
+(connection selected or session aborted).<a href="#section-5.19-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.3">
-            <p id="section-5.19-4.3.1"><code>first_success_family</code>: The address family of the first successful attempt.<a href="#section-5.19-4.3.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.3.1"><code>tt_first_success_ms</code>: Time from session start to the first successful
+connection attempt (i.e., time-to-first-byte readiness).<a href="#section-5.19-4.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.4">
-            <p id="section-5.19-4.4.1"><code>first_success_transport</code>: The transport protocol of the first successful
-attempt.<a href="#section-5.19-4.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.4.1"><code>first_success_family</code>: The address family of the first successful attempt.<a href="#section-5.19-4.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.5">
-            <p id="section-5.19-4.5.1"><code>attempts_total</code>: Total number of connection attempts initiated.<a href="#section-5.19-4.5.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.5.1"><code>first_success_transport</code>: The transport protocol of the first successful
+attempt.<a href="#section-5.19-4.5.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.6">
-            <p id="section-5.19-4.6.1"><code>attempts_success</code>: Number of attempts that completed successfully.<a href="#section-5.19-4.6.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.6.1"><code>attempts_total</code>: Total number of connection attempts initiated.<a href="#section-5.19-4.6.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.7">
-            <p id="section-5.19-4.7.1"><code>attempts_failure</code>: Number of attempts that failed, timed out, or were
-canceled.<a href="#section-5.19-4.7.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.7.1"><code>attempts_success</code>: Number of attempts that completed successfully.<a href="#section-5.19-4.7.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.19-4.8">
+            <p id="section-5.19-4.8.1"><code>attempts_failure</code>: Number of attempts that failed, timed out, or were
+canceled.<a href="#section-5.19-4.8.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
+<p id="section-5.19-5">When <code>outcome</code> is <code>"aborted"</code>, the fields <code>tt_first_success_ms</code>,
+<code>first_success_family</code>, and <code>first_success_transport</code> are not present.<a href="#section-5.19-5" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="conformance-requirements">
