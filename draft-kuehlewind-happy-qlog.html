@@ -1698,8 +1698,7 @@ HENat64PrefixDiscovered = {
 <pre>
 HECandidateDiscovered = {
         he_session_id: text
-        source: "dns" / "cache" / "alt_svc" / "synth" / "preconnect" /
-                "svcb_hint" / "nat64_synthesis"
+        source: "dns" / "svcb_hint" / "nat64_synthesis"
         target: HEAttemptTarget
         group_id: text ?
         supersedes: text ?
@@ -1708,9 +1707,10 @@ HECandidateDiscovered = {
 }
 </pre><a href="#section-5.5-1" class="pilcrow">¶</a>
 </div>
-<p id="section-5.5-2">The <code>source</code> value <code>"svcb_hint"</code> indicates the address came from ipv4hint or
-ipv6hint parameters in a SVCB/HTTPS record. The <code>"nat64_synthesis"</code> value
-indicates a locally synthesized IPv6 address for NAT64 traversal.<a href="#section-5.5-2" class="pilcrow">¶</a></p>
+<p id="section-5.5-2">The <code>source</code> value <code>"dns"</code> indicates the address came from A or AAAA
+records. The <code>"svcb_hint"</code> value indicates the address came from ipv4hint
+or ipv6hint parameters in a SVCB/HTTPS record. The <code>"nat64_synthesis"</code>
+value indicates a locally synthesized IPv6 address for NAT64 traversal.<a href="#section-5.5-2" class="pilcrow">¶</a></p>
 <p id="section-5.5-3">The <code>group_id</code> field identifies which protocol/priority group this candidate
 belongs to (per Section 5.1 and 5.2 of HEv3). The <code>supersedes</code> field
 contains the address of an SVCB hint that this candidate replaces once
@@ -1825,14 +1825,14 @@ addresses arrive.<a href="#section-5.8-1" class="pilcrow">¶</a></p>
 <pre>
 HECandidatesResorted = {
         he_session_id: text
-        trigger: "new_addresses" / "new_svcb" / "dns_push"
+        reason: "new_addresses" / "new_svcb" / "dns_push"
         new_order: [+ HEAttemptTarget]
 
         * $$he-candidatesresorted-extension
 }
 </pre><a href="#section-5.8-2" class="pilcrow">¶</a>
 </div>
-<p id="section-5.8-3">The <code>trigger</code> field captures why re-sorting occurred:<a href="#section-5.8-3" class="pilcrow">¶</a></p>
+<p id="section-5.8-3">The <code>reason</code> field captures why re-sorting occurred:<a href="#section-5.8-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.8-4.1">
             <p id="section-5.8-4.1.1"><code>"new_addresses"</code>: New A/AAAA records arrived (e.g., delayed IPv4 after
@@ -1869,8 +1869,6 @@ HEAttemptScheduled = {
                 "policy_timer" /
                 "dns_completed" /
                 "resolution_delay_expired" /
-                "racing_window" /
-                "retry" /
                 "last_resort_synthesis"
 
         * $$he-attemptscheduled-extension
@@ -1892,14 +1890,8 @@ start. The <code>reason</code> field indicates what triggered scheduling:<a href
 (Section 4.2 of HEv3).<a href="#section-5.9-4.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.9-4.4">
-            <p id="section-5.9-4.4.1"><code>"racing_window"</code>: Scheduled as part of parallel racing.<a href="#section-5.9-4.4.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.9-4.5">
-            <p id="section-5.9-4.5.1"><code>"retry"</code>: A retry of a previously failed attempt.<a href="#section-5.9-4.5.1" class="pilcrow">¶</a></p>
-</li>
-          <li class="normal" id="section-5.9-4.6">
-            <p id="section-5.9-4.6.1"><code>"last_resort_synthesis"</code>: The Last Resort Local Synthesis Delay expired,
-triggering a fallback A query and NAT64 synthesis (Section 8.4 of HEv3).<a href="#section-5.9-4.6.1" class="pilcrow">¶</a></p>
+            <p id="section-5.9-4.4.1"><code>"last_resort_synthesis"</code>: The Last Resort Local Synthesis Delay expired,
+triggering a fallback A query and NAT64 synthesis (Section 8.4 of HEv3).<a href="#section-5.9-4.4.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>
@@ -1965,13 +1957,13 @@ SVCB/HTTPS query.<a href="#section-5.11-3" class="pilcrow">¶</a></p>
 HEAttemptResumed = {
         he_session_id: text
         attempt_id: text
-        trigger: "svcb_received" / "timeout" / "policy_override"
+        reason: "svcb_received" / "timeout" / "policy_override"
 
         * $$he-attemptresumed-extension
 }
 </pre><a href="#section-5.12-2" class="pilcrow">¶</a>
 </div>
-<p id="section-5.12-3">The <code>trigger</code> field indicates what unblocked the attempt:<a href="#section-5.12-3" class="pilcrow">¶</a></p>
+<p id="section-5.12-3">The <code>reason</code> field indicates what unblocked the attempt:<a href="#section-5.12-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.12-4.1">
             <p id="section-5.12-4.1.1"><code>"svcb_received"</code>: The awaited SVCB/HTTPS response arrived.<a href="#section-5.12-4.1.1" class="pilcrow">¶</a></p>
@@ -2162,8 +2154,10 @@ description of why the session was aborted (e.g., "all attempts failed",
 <pre>
 HEMetrics = {
         he_session_id: text
+        total_duration_ms: uint32 ?
         tt_first_success_ms: uint32 ?
         first_success_family: "ipv4" / "ipv6" ?
+        first_success_transport: "tcp" / "quic" ?
         attempts_total: uint32
         attempts_success: uint32
         attempts_failure: uint32
@@ -2175,21 +2169,29 @@ HEMetrics = {
 <p id="section-5.19-3">The fields capture end-to-end session statistics:<a href="#section-5.19-3" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-5.19-4.1">
-            <p id="section-5.19-4.1.1"><code>tt_first_success_ms</code>: Time from session start to the first successful
-connection attempt (i.e., time-to-first-byte readiness).<a href="#section-5.19-4.1.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.1.1"><code>total_duration_ms</code>: Total time from session start to final outcome
+(connection selected or session aborted).<a href="#section-5.19-4.1.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.2">
-            <p id="section-5.19-4.2.1"><code>first_success_family</code>: The address family of the first successful attempt.<a href="#section-5.19-4.2.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.2.1"><code>tt_first_success_ms</code>: Time from session start to the first successful
+connection attempt (i.e., time-to-first-byte readiness).<a href="#section-5.19-4.2.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.3">
-            <p id="section-5.19-4.3.1"><code>attempts_total</code>: Total number of connection attempts initiated.<a href="#section-5.19-4.3.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.3.1"><code>first_success_family</code>: The address family of the first successful attempt.<a href="#section-5.19-4.3.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.4">
-            <p id="section-5.19-4.4.1"><code>attempts_success</code>: Number of attempts that completed successfully.<a href="#section-5.19-4.4.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.4.1"><code>first_success_transport</code>: The transport protocol of the first successful
+attempt.<a href="#section-5.19-4.4.1" class="pilcrow">¶</a></p>
 </li>
           <li class="normal" id="section-5.19-4.5">
-            <p id="section-5.19-4.5.1"><code>attempts_failure</code>: Number of attempts that failed, timed out, or were
-canceled.<a href="#section-5.19-4.5.1" class="pilcrow">¶</a></p>
+            <p id="section-5.19-4.5.1"><code>attempts_total</code>: Total number of connection attempts initiated.<a href="#section-5.19-4.5.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.19-4.6">
+            <p id="section-5.19-4.6.1"><code>attempts_success</code>: Number of attempts that completed successfully.<a href="#section-5.19-4.6.1" class="pilcrow">¶</a></p>
+</li>
+          <li class="normal" id="section-5.19-4.7">
+            <p id="section-5.19-4.7.1"><code>attempts_failure</code>: Number of attempts that failed, timed out, or were
+canceled.<a href="#section-5.19-4.7.1" class="pilcrow">¶</a></p>
 </li>
         </ul>
 </section>

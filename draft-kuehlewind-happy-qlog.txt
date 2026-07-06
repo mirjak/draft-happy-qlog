@@ -437,8 +437,7 @@ Table of Contents
 
    HECandidateDiscovered = {
            he_session_id: text
-           source: "dns" / "cache" / "alt_svc" / "synth" / "preconnect" /
-                   "svcb_hint" / "nat64_synthesis"
+           source: "dns" / "svcb_hint" / "nat64_synthesis"
            target: HEAttemptTarget
            group_id: text ?
            supersedes: text ?
@@ -446,10 +445,11 @@ Table of Contents
            * $$he-candidatediscovered-extension
    }
 
-   The source value "svcb_hint" indicates the address came from ipv4hint
-   or ipv6hint parameters in a SVCB/HTTPS record.  The "nat64_synthesis"
-   value indicates a locally synthesized IPv6 address for NAT64
-   traversal.
+   The source value "dns" indicates the address came from A or AAAA
+   records.  The "svcb_hint" value indicates the address came from
+   ipv4hint or ipv6hint parameters in a SVCB/HTTPS record.  The
+   "nat64_synthesis" value indicates a locally synthesized IPv6 address
+   for NAT64 traversal.
 
    The group_id field identifies which protocol/priority group this
    candidate belongs to (per Section 5.1 and 5.2 of HEv3).  The
@@ -539,13 +539,13 @@ Table of Contents
 
    HECandidatesResorted = {
            he_session_id: text
-           trigger: "new_addresses" / "new_svcb" / "dns_push"
+           reason: "new_addresses" / "new_svcb" / "dns_push"
            new_order: [+ HEAttemptTarget]
 
            * $$he-candidatesresorted-extension
    }
 
-   The trigger field captures why re-sorting occurred:
+   The reason field captures why re-sorting occurred:
 
    *  "new_addresses": New A/AAAA records arrived (e.g., delayed IPv4
       after an IPv6-only start).
@@ -573,8 +573,6 @@ Table of Contents
                    "policy_timer" /
                    "dns_completed" /
                    "resolution_delay_expired" /
-                   "racing_window" /
-                   "retry" /
                    "last_resort_synthesis"
 
            * $$he-attemptscheduled-extension
@@ -591,10 +589,6 @@ Table of Contents
 
    *  "resolution_delay_expired": The Resolution Delay timer expired
       (Section 4.2 of HEv3).
-
-   *  "racing_window": Scheduled as part of parallel racing.
-
-   *  "retry": A retry of a previously failed attempt.
 
    *  "last_resort_synthesis": The Last Resort Local Synthesis Delay
       expired, triggering a fallback A query and NAT64 synthesis
@@ -646,12 +640,12 @@ Table of Contents
    HEAttemptResumed = {
            he_session_id: text
            attempt_id: text
-           trigger: "svcb_received" / "timeout" / "policy_override"
+           reason: "svcb_received" / "timeout" / "policy_override"
 
            * $$he-attemptresumed-extension
    }
 
-   The trigger field indicates what unblocked the attempt:
+   The reason field indicates what unblocked the attempt:
 
    *  "svcb_received": The awaited SVCB/HTTPS response arrived.
 
@@ -786,8 +780,10 @@ Table of Contents
 
    HEMetrics = {
            he_session_id: text
+           total_duration_ms: uint32 ?
            tt_first_success_ms: uint32 ?
            first_success_family: "ipv4" / "ipv6" ?
+           first_success_transport: "tcp" / "quic" ?
            attempts_total: uint32
            attempts_success: uint32
            attempts_failure: uint32
@@ -797,12 +793,18 @@ Table of Contents
 
    The fields capture end-to-end session statistics:
 
+   *  total_duration_ms: Total time from session start to final outcome
+      (connection selected or session aborted).
+
    *  tt_first_success_ms: Time from session start to the first
       successful connection attempt (i.e., time-to-first-byte
       readiness).
 
    *  first_success_family: The address family of the first successful
       attempt.
+
+   *  first_success_transport: The transport protocol of the first
+      successful attempt.
 
    *  attempts_total: Total number of connection attempts initiated.
 
