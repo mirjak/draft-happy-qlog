@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2026-07-05T02:04:54.743220+00:00",
+  "timestamp": "2026-07-07T02:05:49.684328+00:00",
   "repo": "mirjak/draft-happy-qlog",
   "labels": [
     {
@@ -49,6 +49,23 @@
       "color": "ffffff"
     }
   ],
-  "issues": [],
+  "issues": [
+    {
+      "number": 1,
+      "id": "I_kwDOTKjSMc8AAAABHz4qYQ",
+      "title": "What triggers policy updates?",
+      "url": "https://github.com/mirjak/draft-happy-qlog/issues/1",
+      "state": "OPEN",
+      "author": "mirjak",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "The config_set event includes \"network_change\" as a reason for policy updates. However, HEv3 does not explicitly define a\n  mechanism where the configurable policy values (delays, preferred family, etc.) change in response to a network event.\n\nHEv3 mentions network changes in the context of:\n - Flushing historical data when the device changes networks (Section 5.3)\n - Enabling IPv6-only/NAT64 features on IPv6-mostly networks (Section 8)\n\nBut these are behavioral adaptations within a fixed policy, not policy parameter changes.\n\nShould \"network_change\" remain as a config_set reason in this qlog schema, or should it be left to the HEv3 spec to define if/when policy changes in response to network events? Do we need other reasons?",
+      "createdAt": "2026-07-06T12:30:20Z",
+      "updatedAt": "2026-07-06T12:30:20Z",
+      "closedAt": null,
+      "comments": []
+    }
+  ],
   "pulls": []
 }
