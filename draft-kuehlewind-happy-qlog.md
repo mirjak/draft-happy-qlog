@@ -99,7 +99,6 @@ HEAttemptTarget = {
 	port: uint16
 	family: "ipv4" / "ipv6"
 	interface: text ?
-	path_id: text ?
 	alpn: [+ text] ?
 	service_name: text ?
 	service_priority: uint32 ?
@@ -115,7 +114,6 @@ The following fields are defined:
 * `port`: The destination port number.
 * `family`: The address family, either `"ipv4"` or `"ipv6"`.
 * `interface`: The local network interface used for this attempt.
-* `path_id`: An implementation-defined identifier for the network path.
 * `alpn`: The negotiated ALPN set for this target derived from SVCB records.
 * `service_name`: The SVCB ServiceMode TargetName this target originates from.
 * `service_priority`: The SVCB SvcPriority value for this target's service.
